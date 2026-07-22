@@ -1,6 +1,5 @@
 FROM python:3.10-slim
 
-# System dependencies သွင်းခြင်း (Clean apt update)
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends ffmpeg git && \
     apt-get clean && \
@@ -8,11 +7,10 @@ RUN apt-get update -y && \
 
 WORKDIR /app
 
-# Requirements သွင်းခြင်း
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# App files များ copy ကူးခြင်း
 COPY . .
 
 EXPOSE 8080
