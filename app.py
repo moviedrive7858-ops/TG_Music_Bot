@@ -1,23 +1,32 @@
 import os
 import asyncio
 import threading
-from flask import Flask
+from flask import Flask, jsonify
 from pyrogram import Client, filters
 from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 from yt_dlp import YoutubeDL
 
+# Flask Web Server
 app = Flask(__name__)
 
+# Main Route
 @app.route('/')
 def home():
-    return "Telegram Music Bot is Running Alive!"
+    return "Telegram Music Bot is Live!"
 
+# 🟢 UptimeRobot Monitoring Route
+@app.route('/ping')
+def ping():
+    return jsonify({"status": "alive", "message": "Bot is running smoothly!"}), 200
+
+# Environment Variables
 API_ID = int(os.environ.get("API_ID", 0))
 API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 STRING_SESSION = os.environ.get("STRING_SESSION", "")
 
+# Telegram Clients Setup
 bot = Client("music_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 user = Client("user_session", api_id=API_ID, api_hash=API_HASH, session_string=STRING_SESSION)
 call = PyTgCalls(user)
@@ -82,18 +91,19 @@ async def stop(_, message):
     except:
         await message.reply_text("❌ မည်သည့် Voice Call မှ ဖွင့်မထားပါ။")
 
-def start_telegram_services():
+def run_bot():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
-    async def run_all():
+    async def start_services():
         await bot.start()
         await user.start()
         await call.start()
-        print(">>> BOT STARTED SUCCESSFULLY <<<")
+        print(">>> BOT IS FULLY STARTED <<<")
         await asyncio.Event().wait()
 
-    loop.run_until_complete(run_all())
+    loop.run_until_complete(start_services())
 
 # Background Thread
-threading.Thread(target=start_telegram_services, daemon=True).start()
+bot_thread = threading.Thread(target=run_bot, daemon=True)
+bot_thread.start()
