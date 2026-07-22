@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Bot is Alive!"
+    return "Telegram Music Bot is Running Alive!"
 
 API_ID = int(os.environ.get("API_ID", 0))
 API_HASH = os.environ.get("API_HASH", "")
@@ -90,8 +90,10 @@ def start_telegram_services():
         await bot.start()
         await user.start()
         await call.start()
+        print(">>> BOT STARTED SUCCESSFULLY <<<")
         await asyncio.Event().wait()
 
     loop.run_until_complete(run_all())
 
+# Background Thread
 threading.Thread(target=start_telegram_services, daemon=True).start()
