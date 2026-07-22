@@ -1,0 +1,5 @@
+pyrogram
+pytgcalls==2.0.0
+yt-dlp
+flask
+gunicorn
