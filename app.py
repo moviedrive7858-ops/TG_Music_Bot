@@ -28,11 +28,11 @@ API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 STRING_SESSION = os.environ.get("STRING_SESSION", "")
 
-# Client Initializations
+# Telegram Clients Initializations
 bot = Client("music_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 user = Client("user_session", api_id=API_ID, api_hash=API_HASH, session_string=STRING_SESSION)
 
-# PyTgCalls v3 Syntax
+# PyTgCalls Client
 call = PyTgCalls(user)
 
 queues = {}
@@ -110,8 +110,10 @@ async def stop(_, message):
         await message.reply_text("❌ မည်သည့် Voice Call မှ ဖွင့်မထားပါ။")
 
 async def main():
+    # Flask app ကို background thread ဖြင့် စတင်ခြင်း
     threading.Thread(target=run_flask, daemon=True).start()
     
+    # Telegram Clients များကို စတင်ခြင်း
     await bot.start()
     await user.start()
     await call.start()
