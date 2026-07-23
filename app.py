@@ -2,7 +2,7 @@ import os
 import asyncio
 import threading
 from flask import Flask, jsonify
-from hydrogram import Client, filters
+from pyrogram import Client, filters
 from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 from pytgcalls.types.stream import StreamEnded
