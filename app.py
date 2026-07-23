@@ -4,7 +4,7 @@ import threading
 from flask import Flask, jsonify
 from pyrogram import Client, filters
 from pytgcalls import PyTgCalls
-from pytgcalls.types import MediaStream
+from pytgcalls.types import AudioQuality, MediaStream
 from yt_dlp import YoutubeDL
 
 # Flask Web Server setup
@@ -19,7 +19,6 @@ def ping():
     return jsonify({"status": "alive"}), 200
 
 def run_flask():
-    # Render port ကို အသုံးပြုရန်
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
 
@@ -29,8 +28,11 @@ API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 STRING_SESSION = os.environ.get("STRING_SESSION", "")
 
+# Client Initializations
 bot = Client("music_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 user = Client("user_session", api_id=API_ID, api_hash=API_HASH, session_string=STRING_SESSION)
+
+# PyTgCalls v3 Syntax
 call = PyTgCalls(user)
 
 queues = {}
@@ -49,7 +51,14 @@ async def play_next(chat_id):
     if chat_id in queues and len(queues[chat_id]) > 0:
         next_song = queues[chat_id].pop(0)
         url, title = get_audio_url(next_song)
-        await call.play(chat_id, MediaStream(url))
+        await call.play(
+            chat_id,
+            MediaStream(
+                url,
+                video_flags=MediaStream.Flags.IGNORE,
+                audio_parameters=AudioQuality.HIGH
+            )
+        )
         await bot.send_message(chat_id, f"🎵 အခုဖွင့်နေသည်: **{title}**")
     else:
         await call.leave_call(chat_id)
@@ -69,7 +78,14 @@ async def play(_, message):
             return await msg.edit(f"➕ Queue ထဲသို့ပေါင်းထည့်ပြီးပါပြီ: **{title}**")
         
         queues[chat_id] = []
-        await call.play(chat_id, MediaStream(url))
+        await call.play(
+            chat_id,
+            MediaStream(
+                url,
+                video_flags=MediaStream.Flags.IGNORE,
+                audio_parameters=AudioQuality.HIGH
+            )
+        )
         await msg.edit(f"🎶 စတင်ဖွင့်နေပါပြီ: **{title}**")
     except Exception as e:
         await msg.edit(f"❌ အမှားအယွင်းရှိပါသည်: {str(e)}")
@@ -94,10 +110,8 @@ async def stop(_, message):
         await message.reply_text("❌ မည်သည့် Voice Call မှ ဖွင့်မထားပါ။")
 
 async def main():
-    # Flask Web server ကို background thread ဖြင့် Run ခြင်း
     threading.Thread(target=run_flask, daemon=True).start()
     
-    # Telegram Clients စတင်ခြင်း
     await bot.start()
     await user.start()
     await call.start()
