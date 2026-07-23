@@ -7,18 +7,21 @@ from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 from yt_dlp import YoutubeDL
 
-# Flask Web Server
+# Flask Web Server setup
 app = Flask(__name__)
 
-# Main Route
 @app.route('/')
 def home():
     return "Telegram Music Bot is Live!"
 
-# 🟢 UptimeRobot Monitoring Route
 @app.route('/ping')
 def ping():
-    return jsonify({"status": "alive", "message": "Bot is running smoothly!"}), 200
+    return jsonify({"status": "alive"}), 200
+
+def run_flask():
+    # Render port ကို အသုံးပြုရန်
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
 
 # Environment Variables
 API_ID = int(os.environ.get("API_ID", 0))
@@ -26,7 +29,6 @@ API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 STRING_SESSION = os.environ.get("STRING_SESSION", "")
 
-# Telegram Clients Setup
 bot = Client("music_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 user = Client("user_session", api_id=API_ID, api_hash=API_HASH, session_string=STRING_SESSION)
 call = PyTgCalls(user)
@@ -91,19 +93,16 @@ async def stop(_, message):
     except:
         await message.reply_text("❌ မည်သည့် Voice Call မှ ဖွင့်မထားပါ။")
 
-def run_bot():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+async def main():
+    # Flask Web server ကို background thread ဖြင့် Run ခြင်း
+    threading.Thread(target=run_flask, daemon=True).start()
     
-    async def start_services():
-        await bot.start()
-        await user.start()
-        await call.start()
-        print(">>> BOT IS FULLY STARTED <<<")
-        await asyncio.Event().wait()
+    # Telegram Clients စတင်ခြင်း
+    await bot.start()
+    await user.start()
+    await call.start()
+    print(">>> BOT IS FULLY ONLINE & RUNNING <<<")
+    await asyncio.Event().wait()
 
-    loop.run_until_complete(start_services())
-
-# Background Thread
-bot_thread = threading.Thread(target=run_bot, daemon=True)
-bot_thread.start()
+if __name__ == "__main__":
+    asyncio.run(main())
