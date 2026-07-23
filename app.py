@@ -7,7 +7,6 @@ from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 from yt_dlp import YoutubeDL
 
-# Flask Web Server setup
 app = Flask(__name__)
 
 @app.route('/')
@@ -22,17 +21,13 @@ def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
 
-# Environment Variables
 API_ID = int(os.environ.get("API_ID", 0))
 API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 STRING_SESSION = os.environ.get("STRING_SESSION", "")
 
-# Telegram Clients Initializations
 bot = Client("music_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 user = Client("user_session", api_id=API_ID, api_hash=API_HASH, session_string=STRING_SESSION)
-
-# PyTgCalls Client Initializing with user
 call = PyTgCalls(user)
 
 queues = {}
@@ -51,10 +46,7 @@ async def play_next(chat_id):
     if chat_id in queues and len(queues[chat_id]) > 0:
         next_song = queues[chat_id].pop(0)
         url, title = get_audio_url(next_song)
-        await call.play(
-            chat_id,
-            MediaStream(url)
-        )
+        await call.play(chat_id, MediaStream(url))
         await bot.send_message(chat_id, f"🎵 အခုဖွင့်နေသည်: **{title}**")
     else:
         await call.leave_call(chat_id)
@@ -74,10 +66,7 @@ async def play(_, message):
             return await msg.edit(f"➕ Queue ထဲသို့ပေါင်းထည့်ပြီးပါပြီ: **{title}**")
         
         queues[chat_id] = []
-        await call.play(
-            chat_id,
-            MediaStream(url)
-        )
+        await call.play(chat_id, MediaStream(url))
         await msg.edit(f"🎶 စတင်ဖွင့်နေပါပြီ: **{title}**")
     except Exception as e:
         await msg.edit(f"❌ အမှားအယွင်းရှိပါသည်: {str(e)}")
@@ -102,10 +91,8 @@ async def stop(_, message):
         await message.reply_text("❌ မည်သည့် Voice Call မှ ဖွင့်မထားပါ။")
 
 async def main():
-    # Flask Web server
     threading.Thread(target=run_flask, daemon=True).start()
     
-    # Telegram Clients
     await bot.start()
     await user.start()
     await call.start()
