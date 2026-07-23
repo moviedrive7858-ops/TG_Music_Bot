@@ -4,7 +4,7 @@ import threading
 from flask import Flask, jsonify
 from pyrogram import Client, filters
 from pytgcalls import PyTgCalls
-from pytgcalls.types import AudioQuality, MediaStream
+from pytgcalls.types import MediaStream
 from yt_dlp import YoutubeDL
 
 # Flask Web Server setup
@@ -32,7 +32,7 @@ STRING_SESSION = os.environ.get("STRING_SESSION", "")
 bot = Client("music_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 user = Client("user_session", api_id=API_ID, api_hash=API_HASH, session_string=STRING_SESSION)
 
-# PyTgCalls Client
+# PyTgCalls Client Initializing with user
 call = PyTgCalls(user)
 
 queues = {}
@@ -53,11 +53,7 @@ async def play_next(chat_id):
         url, title = get_audio_url(next_song)
         await call.play(
             chat_id,
-            MediaStream(
-                url,
-                video_flags=MediaStream.Flags.IGNORE,
-                audio_parameters=AudioQuality.HIGH
-            )
+            MediaStream(url)
         )
         await bot.send_message(chat_id, f"🎵 အခုဖွင့်နေသည်: **{title}**")
     else:
@@ -80,11 +76,7 @@ async def play(_, message):
         queues[chat_id] = []
         await call.play(
             chat_id,
-            MediaStream(
-                url,
-                video_flags=MediaStream.Flags.IGNORE,
-                audio_parameters=AudioQuality.HIGH
-            )
+            MediaStream(url)
         )
         await msg.edit(f"🎶 စတင်ဖွင့်နေပါပြီ: **{title}**")
     except Exception as e:
@@ -110,10 +102,10 @@ async def stop(_, message):
         await message.reply_text("❌ မည်သည့် Voice Call မှ ဖွင့်မထားပါ။")
 
 async def main():
-    # Flask app ကို background thread ဖြင့် စတင်ခြင်း
+    # Flask Web server
     threading.Thread(target=run_flask, daemon=True).start()
     
-    # Telegram Clients များကို စတင်ခြင်း
+    # Telegram Clients
     await bot.start()
     await user.start()
     await call.start()
